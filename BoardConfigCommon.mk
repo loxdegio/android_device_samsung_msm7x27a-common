@@ -36,11 +36,13 @@ TARGET_SPECIFIC_HEADER_PATH := device/samsung/msm7x27a-common/include
 TARGET_USE_QCOM_BIONIC_OPTIMIZATION := true
 ARCH_ARM_HAVE_TLS_REGISTER := true
 
-TARGET_GLOBAL_CFLAGS += -mtune=cortex-a5 -mfpu=neon-vfpv4 -mfloat-abi=softfp
-TARGET_GLOBAL_CPPFLAGS += -mtune=cortex-a5 -mfpu=neon-vfpv4 -mfloat-abi=softfp
+TARGET_GLOBAL_CFLAGS += -O2 -mtune=cortex-a5 -mfpu=neon-vfpv4 -mfloat-abi=softfp -funsafe-math-optimizations
+TARGET_GLOBAL_CPPFLAGS += -O2 -mtune=cortex-a5 -mfpu=neon-vfpv4 -mfloat-abi=softfp -funsafe-math-optimizations
 
 ## FM Radio
-BOARD_HAVE_QCOM_FM := true
+#BOARD_HAVE_QCOM_FM := true
+#BOARD_HAVE_QCOM_MR1_FM := true
+#COMMON_GLOBAL_CFLAGS += -DQCOM_FM_ENABLED
 
 ## Memory
 TARGET_USES_ION := true
@@ -89,6 +91,9 @@ BOARD_VENDOR_QCOM_GPS_LOC_API_AMSS_VERSION := 50000
 
 ## Bluetooth
 BOARD_HAVE_BLUETOOTH := true
+
+## Legacy Sensors Fusion
+BOARD_USE_LEGACY_SENSORS_FUSION := true 
 
 ## Wi-Fi
 BOARD_WLAN_DEVICE := ath6kl
