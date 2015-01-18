@@ -1,0 +1,63 @@
+diff -urN services/surfaceflinger/Android.mk services/surfaceflinger/Android.mk
+--- services/surfaceflinger/Android.mk	2015-01-18 11:21:57.349944699 +0100
++++ services/surfaceflinger/Android.mk	2015-01-18 11:55:54.396838457 +0100
+@@ -112,16 +112,10 @@
+ 
+ ifeq ($(TARGET_USES_QCOM_BSP), true)
+ ifneq ($(TARGET_QCOM_DISPLAY_VARIANT),)
+-    PLATFORM := .
++    LOCAL_C_INCLUDES += hardware/qcom/display-$(TARGET_QCOM_DISPLAY_VARIANT)/libgralloc
+ else
+-    PLATFORM := $(TARGET_BOARD_PLATFORM)
++    LOCAL_C_INCLUDES += hardware/qcom/display/$(TARGET_BOARD_PLATFORM)/libgralloc
+ endif
+-    LOCAL_C_INCLUDES += $(call project-path-for,qcom-display)/$(PLATFORM)/libgralloc
+-    LOCAL_C_INCLUDES += $(call project-path-for,qcom-display)/$(PLATFORM)/libqdutils
+-ifeq ($(TARGET_QCOM_DISPLAY_VARIANT),caf-new)
+-    LOCAL_CFLAGS += -DQCOM_B_FAMILY
+-endif
+-    LOCAL_SHARED_LIBRARIES += libqdutils
+     LOCAL_CFLAGS += -DQCOM_BSP
+ endif
+ 
+diff -urN services/surfaceflinger/SurfaceFlinger.cpp services/surfaceflinger/SurfaceFlinger.cpp
+--- services/surfaceflinger/SurfaceFlinger.cpp	2015-01-18 11:21:57.566945807 +0100
++++ services/surfaceflinger/SurfaceFlinger.cpp	2015-01-18 11:57:12.084868071 +0100
+@@ -1510,14 +1510,12 @@
+                                 || (state.frame != draw[i].frame))
+                         {
+ #ifdef QCOM_BSP
+-                            int orient = state.orientation;
+                             // Honor the orientation change after boot
+                             // animation completes and make sure boot
+                             // animation is shown in panel orientation always.
+                             if(mBootFinished){
+                                 disp->setProjection(state.orientation,
+                                         state.viewport, state.frame);
+-                                orient = state.orientation;
+                             }
+                             else{
+                                 char property[PROPERTY_VALUE_MAX];
+@@ -1529,22 +1527,10 @@
+                                 }
+                                 disp->setProjection(panelOrientation,
+                                         state.viewport, state.frame);
+-                                orient = panelOrientation;
+                             }
+ #endif
+-#ifdef QCOM_B_FAMILY
+-                            // Set the view frame of each display only of its
+-                            // default orientation.
+-                            if(orient == DisplayState::eOrientationDefault and
+-                                    state.frame.isValid()) {
+-                                qdutils::setViewFrame(disp->getHwcDisplayId(),
+-                                    state.frame.left, state.frame.top,
+-                                    state.frame.right, state.frame.bottom);
+-                            }
+-#else
+                             disp->setProjection(state.orientation,
+                                 state.viewport, state.frame);
+-#endif
+                         }
+                     }
+                 }
