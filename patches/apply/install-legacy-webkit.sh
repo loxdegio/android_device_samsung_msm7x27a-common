@@ -1,7 +1,7 @@
 #!/bin/sh
 
 MYABSPATH=$(readlink -f "$0")
-PATCHBASE=$(dirname "$MYABSPATH")/../common
+PATCHBASE=$(dirname "$MYABSPATH")/../legacy-webkit
 CMBASE=$(readlink -f "$PATCHBASE/../../../../../")
 
 for i in $(find "$PATCHBASE"/* -type d); do

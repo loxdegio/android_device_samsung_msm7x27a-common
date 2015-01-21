@@ -1,0 +1,137 @@
+From e43890784fd08ac92de08691c7c6ba545c7ecb80 Mon Sep 17 00:00:00 2001
+From: codeworkx <codeworkx@cyanogenmod.org>
+Date: Mon, 10 Dec 2012 22:50:41 +0100
+Subject: [PATCH 018/196] camera: add support for samsung and htc camcorder
+ modes
+
+Change-Id: I68e6995a51dffa3b5851eb4b7a3a72e60d201d5b
+---
+ res/values/config.xml                       |  4 ++++
+ src/com/android/camera/CameraSettings.java  | 15 +++++++++++++++
+ src/com/android/camera/PhotoModule.java     |  7 +++++++
+ src/com/android/camera/VideoModule.java     |  3 +++
+ src/com/android/camera/util/CameraUtil.java | 16 ++++++++++++++++
+ 5 files changed, 45 insertions(+)
+
+diff --git a/res/values/config.xml b/res/values/config.xml
+index ae0334f..5d3e9a0 100644
+--- a/res/values/config.xml
++++ b/res/values/config.xml
+@@ -30,4 +30,8 @@
+     <!-- Cancel autofocus if preview stopped. If camera HAL does not support
+         it set this value to false -->
+     <bool name="cancelAutoFocusOnPreviewStopped">true</bool>
++    <!-- Samsung Camcorder Mode -->
++    <bool name="needsSamsungCamMode">false</bool>
++    <!-- HTC Camcorder Mode -->
++    <bool name="needsHTCCamMode">false</bool>
+ </resources>
+diff --git a/src/com/android/camera/CameraSettings.java b/src/com/android/camera/CameraSettings.java
+index 5553500..6d5efda 100644
+--- a/src/com/android/camera/CameraSettings.java
++++ b/src/com/android/camera/CameraSettings.java
+@@ -910,6 +910,21 @@ public class CameraSettings {
+         return params.get("face-beautify") != null;
+     }
+ 
++    /**
++     * Enable video mode for certain cameras.
++     *
++     * @param params
++     * @param on
++     */
++    public static void setVideoMode(Parameters params, boolean on) {
++        if (CameraUtil.useSamsungCamMode()) {
++            params.set("cam_mode", on ? "1" : "0");
++        }
++        if (CameraUtil.useHTCCamMode()) {
++            params.set("cam-mode", on ? "1" : "0");
++        }
++    }
++
+     public static List<String> getSupportedSlowShutter(Parameters params) {
+         String p = params.get("slow-shutter-values");
+         if (p != null) {
+diff --git a/src/com/android/camera/PhotoModule.java b/src/com/android/camera/PhotoModule.java
+index 9be8d31..a6dd47c 100644
+--- a/src/com/android/camera/PhotoModule.java
++++ b/src/com/android/camera/PhotoModule.java
+@@ -2119,6 +2119,10 @@ public class PhotoModule
+         mFocusManager.onPreviewStarted();
+         onPreviewStarted();
+ 
++        // Set camera mode
++        CameraSettings.setVideoMode(mParameters, false);
++        mCameraDevice.setParameters(mParameters);
++
+         if (mSnapshotOnIdle && mBurstShotsDone > 0) {
+             mHandler.post(mDoSnapRunnable);
+         }
+@@ -2650,6 +2654,9 @@ public class PhotoModule
+ 
+         if ((updateSet & UPDATE_PARAM_INITIALIZE) != 0) {
+             updateCameraParametersInitialize();
++
++            // Set camera mode
++            CameraSettings.setVideoMode(mParameters, false);
+         }
+ 
+         if ((updateSet & UPDATE_PARAM_ZOOM) != 0) {
+diff --git a/src/com/android/camera/VideoModule.java b/src/com/android/camera/VideoModule.java
+index 9097389..78a8dcb 100644
+--- a/src/com/android/camera/VideoModule.java
++++ b/src/com/android/camera/VideoModule.java
+@@ -2018,6 +2018,9 @@ public class VideoModule implements CameraModule,
+             mParameters.setPreviewFrameRate(mProfile.videoFrameRate);
+         }
+ 
++        // Set video mode
++        CameraSettings.setVideoMode(mParameters, true);
++
+         forceFlashOffIfSupported(!mUI.isVisible());
+         videoWidth = mProfile.videoFrameWidth;
+         videoHeight = mProfile.videoFrameHeight;
+diff --git a/src/com/android/camera/util/CameraUtil.java b/src/com/android/camera/util/CameraUtil.java
+index 11b10b9..f79b0c4 100644
+--- a/src/com/android/camera/util/CameraUtil.java
++++ b/src/com/android/camera/util/CameraUtil.java
+@@ -211,6 +211,12 @@ public class CameraUtil {
+     // Get available hardware keys
+     private static int sDeviceKeysPresent;
+ 
++    // Samsung camcorder mode
++    private static boolean sSamsungCamMode;
++
++    // HTC camcorder mode
++    private static boolean sHTCCamMode;
++
+     private CameraUtil() {
+     }
+ 
+@@ -230,6 +236,8 @@ public class CameraUtil {
+         sSamsungHDRFormat = context.getResources().getBoolean(R.bool.needsSamsungHDRFormat);
+         sDeviceKeysPresent = context.getResources().getInteger(
+                 com.android.internal.R.integer.config_deviceHardwareKeys);
++        sSamsungCamMode = context.getResources().getBoolean(R.bool.needsSamsungCamMode);
++        sHTCCamMode = context.getResources().getBoolean(R.bool.needsHTCCamMode);
+     }
+ 
+     public static int dpToPixel(int dp) {
+@@ -244,6 +252,14 @@ public class CameraUtil {
+         return sNoFocusModeChangeForTouch;
+     }
+ 
++    public static boolean useHTCCamMode() {
++        return sHTCCamMode;
++    }
++
++    public static boolean useSamsungCamMode() {
++        return sSamsungCamMode;
++    }
++
+     // Rotates the bitmap by the specified degree.
+     // If a new bitmap is created, the original bitmap is recycled.
+     public static Bitmap rotate(Bitmap b, int degrees) {
+-- 
+2.0.5
+
